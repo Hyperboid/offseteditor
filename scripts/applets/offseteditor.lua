@@ -1,9 +1,9 @@
 local imgui = Imgui.lib
 local ffi = require("ffi")
 
----@class OffsetEditorApplet: ImguiMiniApp
-local OffsetEditorApplet, super = Class("ImguiMiniApp", "OffsetEditorApplet")
----@cast super ImguiMiniApp
+---@class OffsetEditorApplet: ImguiApplet
+local OffsetEditorApplet, super = Class("ImguiApplet", "OffsetEditorApplet")
+---@cast super ImguiApplet
 
 function OffsetEditorApplet:init()
     super.init(self, "Offset Editor", imgui.ImGuiWindowFlags_MenuBar)
