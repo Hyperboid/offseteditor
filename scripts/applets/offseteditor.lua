@@ -103,7 +103,7 @@ function OffsetEditorApplet:show()
             self.current_actor.offsets[self.current_sprite] = self.current_actor.offsets[self.current_sprite] or {0,0}
             self.current_actor.offsets[self.current_sprite][1] = self.current_actor.offsets[self.current_sprite][1] + delta.x
             self.current_actor.offsets[self.current_sprite][2] = self.current_actor.offsets[self.current_sprite][2] + delta.y
-        else
+        elseif self.current_actor.offsets[self.current_sprite] then
             self.current_actor.offsets[self.current_sprite][1] = math.floor(self.current_actor.offsets[self.current_sprite][1]) + 0.5
             self.current_actor.offsets[self.current_sprite][2] = math.floor(self.current_actor.offsets[self.current_sprite][2]) + 0.5
         end
