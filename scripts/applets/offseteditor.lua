@@ -111,7 +111,7 @@ function OffsetEditorApplet:show()
         draw_list:AddImage(imgui.love.TextureRef(base_texture), floorvec(offset + topleft), floorvec(offset + topleft + (imgui.ImVec2_Float(base_texture:getDimensions())*self.scale_factor)), nil, nil, imgui.color(.5,.5,.5,0.5))
         offset = floorvec(imgui.ImVec2_Float(self.current_actor:getOffset(self.current_sprite))) * self.scale_factor
         draw_list:AddImage(imgui.love.TextureRef(current_texture), floorvec(offset + topleft), floorvec(offset + topleft + (imgui.ImVec2_Float(current_texture:getDimensions())*self.scale_factor)), nil, nil, imgui.color(1,1,1,0.8))
-        draw_list:AddRect(topleft, bottomright, imgui.GetColorU32_Col(imgui.ImGuiCol_PlotLines), nil, nil, 1)
+        draw_list:AddRect(topleft, bottomright, imgui.GetColorU32_Col(imgui.ImGuiCol_PlotLines, 0.25), nil, nil, 1)
     end
     imgui.EndChild();
     if (imgui.Button("Revert")) then end
