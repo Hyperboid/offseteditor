@@ -94,7 +94,8 @@ function OffsetEditorApplet:show()
         local canvas_p0 = imgui.GetCursorScreenPos()      -- ImDrawList API uses screen coordinates!
         local canvas_sz = imgui.GetContentRegionAvail()   -- Resize canvas to what's available
         local draw_list = imgui.GetWindowDrawList();
-        local topright = (canvas_p0 + (canvas_sz/2)) - imgui.ImVec2_Float(self.current_actor:getWidth()*self.scale_factor/2, self.current_actor:getHeight()*self.scale_factor/2) ---@type imgui.ImVec2
+        local topleft = (canvas_p0 + (canvas_sz/2)) - imgui.ImVec2_Float(self.current_actor:getWidth()*self.scale_factor/2, self.current_actor:getHeight()*self.scale_factor/2) ---@type imgui.ImVec2
+        local bottomright = (canvas_p0 + (canvas_sz/2)) + imgui.ImVec2_Float(self.current_actor:getWidth()*self.scale_factor/2, self.current_actor:getHeight()*self.scale_factor/2) ---@type imgui.ImVec2
         imgui.InvisibleButton("canvas", canvas_sz, bit.bor(imgui.ImGuiButtonFlags_MouseButtonLeft, imgui.ImGuiButtonFlags_MouseButtonRight));
         local dragging = imgui.IsItemHovered() and imgui.IsItemActive()
         if dragging then
@@ -102,11 +103,15 @@ function OffsetEditorApplet:show()
             self.current_actor.offsets[self.current_sprite] = self.current_actor.offsets[self.current_sprite] or {0,0}
             self.current_actor.offsets[self.current_sprite][1] = self.current_actor.offsets[self.current_sprite][1] + delta.x
             self.current_actor.offsets[self.current_sprite][2] = self.current_actor.offsets[self.current_sprite][2] + delta.y
+        else
+            self.current_actor.offsets[self.current_sprite][1] = math.floor(self.current_actor.offsets[self.current_sprite][1]) + 0.5
+            self.current_actor.offsets[self.current_sprite][2] = math.floor(self.current_actor.offsets[self.current_sprite][2]) + 0.5
         end
         local offset = floorvec(imgui.ImVec2_Float(self.current_actor:getOffset(self.default_sprite))) * self.scale_factor
-        draw_list:AddImage(imgui.love.TextureRef(base_texture), floorvec(offset + topright), floorvec(offset + topright + (imgui.ImVec2_Float(base_texture:getDimensions())*self.scale_factor)), nil, nil, imgui.color(.5,.5,.5,0.5))
+        draw_list:AddImage(imgui.love.TextureRef(base_texture), floorvec(offset + topleft), floorvec(offset + topleft + (imgui.ImVec2_Float(base_texture:getDimensions())*self.scale_factor)), nil, nil, imgui.color(.5,.5,.5,0.5))
         offset = floorvec(imgui.ImVec2_Float(self.current_actor:getOffset(self.current_sprite))) * self.scale_factor
-        draw_list:AddImage(imgui.love.TextureRef(current_texture), floorvec(offset + topright), floorvec(offset + topright + (imgui.ImVec2_Float(current_texture:getDimensions())*self.scale_factor)), nil, nil, imgui.color(1,1,1,0.8))
+        draw_list:AddImage(imgui.love.TextureRef(current_texture), floorvec(offset + topleft), floorvec(offset + topleft + (imgui.ImVec2_Float(current_texture:getDimensions())*self.scale_factor)), nil, nil, imgui.color(1,1,1,0.8))
+        draw_list:AddRect(topleft, bottomright, imgui.GetColorU32_Col(imgui.ImGuiCol_PlotLines), nil, nil, 1)
     end
     imgui.EndChild();
     if (imgui.Button("Revert")) then end
@@ -251,6 +256,23 @@ function OffsetEditorApplet:saveOffsets()
 
     file:write(filepostfix)
     file:close()
+
+    -- Swap out actors
+    Mod.info.loaded_scripts = false
+    Mod.info.script_chunks = {}
+    Kristal.Mods.getAndLoadMod(Mod.info.id)
+    Registry.initActors()
+    for _, party in pairs(Game.party_data) do
+        if party.actor then
+            party:setActor(party.actor.id)
+        end
+        if party.lw_actor then
+            party:setLightActor(party.lw_actor.id)
+        end
+    end
+    local current_sprite = self.current_sprite
+    self:setActor(self.current_actor_id)
+    self.current_sprite = current_sprite
 end
 
 return OffsetEditorApplet
