@@ -85,16 +85,17 @@ function OffsetEditorApplet:show()
             return vec
         end
         -- self.scale_factor = Utils.wave(Kristal.getTime()*math.pi/32,8,16)
+        local offsetx, offsety = self.current_actor:getOffset(self.current_sprite)
+        imgui.Text(string.format("[%q] = {%d, %d}", self.current_sprite, offsetx, offsety))
         local base_texture, current_texture = self:getActorTextures()
         local canvas_p0 = imgui.GetCursorScreenPos()      -- ImDrawList API uses screen coordinates!
         local canvas_sz = imgui.GetContentRegionAvail()   -- Resize canvas to what's available
         local draw_list = imgui.GetWindowDrawList();
         local topright = (canvas_p0 + (canvas_sz/2)) - imgui.ImVec2_Float(self.current_actor:getWidth()*self.scale_factor/2, self.current_actor:getHeight()*self.scale_factor/2) ---@type imgui.ImVec2
         imgui.InvisibleButton("canvas", canvas_sz, bit.bor(imgui.ImGuiButtonFlags_MouseButtonLeft, imgui.ImGuiButtonFlags_MouseButtonRight));
-        local offsetx, offsety = self.current_actor:getOffset(self.current_sprite)
         offsetx, offsety = math.floor(offsetx), math.floor(offsety)
-        draw_list:AddText_Vec2(canvas_p0, imgui.color(COLORS.white), string.format("[%q] = {%d, %d}", self.current_sprite, offsetx, offsety), nil)
-        if imgui.IsItemHovered() and imgui.IsItemActive() then
+        local dragging = imgui.IsItemHovered() and imgui.IsItemActive()
+        if dragging then
             local delta = imgui.C.igGetIO().MouseDelta / self.scale_factor
             self.current_actor.offsets[self.current_sprite] = self.current_actor.offsets[self.current_sprite] or {0,0}
             self.current_actor.offsets[self.current_sprite][1] = self.current_actor.offsets[self.current_sprite][1] + delta.x
