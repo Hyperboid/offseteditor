@@ -8,8 +8,10 @@ local OffsetEditorApplet, super = Class("ImguiApplet", "OffsetEditorApplet")
 function OffsetEditorApplet:init()
     super.init(self, "Offset Editor", imgui.ImGuiWindowFlags_MenuBar)
     self.initial_size = imgui.ImVec2_Float(1440, 800)
-    self:setActor("kris")
+    self:setActor(Registry.createPartyMember((Kristal.getModOption("party") or {})[1] or "kris"):getActor())
     self.scale_factor = 8
+    self.closebutton_pointer[0]=true
+    self.save_offsets_popop = imgui.bool(false)
 end
 
 function OffsetEditorApplet:setActor(actor)
@@ -20,10 +22,10 @@ function OffsetEditorApplet:setActor(actor)
     self.current_actor = actor
     self.current_actor_id = actor.id
     self.default_sprite = actor:getDefaultSprite() or actor:getDefault()
-    self.current_sprite = self.default_sprite
     local sprite_choices = Utils.copy(actor.offsets)
-    if sprite_choices[self.current_sprite .. "/down"] then
-        self.current_sprite = self.current_sprite .. "/down"
+    self.current_sprite = next(sprite_choices) or self.default_sprite
+    if sprite_choices[self.default_sprite .. "/down"] then
+        self.current_sprite = self.default_sprite .. "/down"
     else
         sprite_choices[self.current_sprite] = true
     end
@@ -117,7 +119,137 @@ function OffsetEditorApplet:show()
         offset_code = offset_code .. "}"
         love.system.setClipboardText(offset_code)
     end
+    imgui.SameLine();
+    if self:getActorPath() and (imgui.Button("Save offsets")) then
+        imgui.OpenPopup_Str("Save offsets?")
+    end
+    self:showSaveOffsetsModal()
     imgui.EndGroup();
+end
+
+---@return string? path
+---@return string? error
+function OffsetEditorApplet:getActorPath()
+    local path = Mod.info.path .. "/scripts/data/actors/"..self.current_actor_id..".lua"
+    if love.filesystem.getInfo(path) then
+        return path
+    end
+    for i=#Mod.info.lib_order, 1, -1 do
+        local lib = Mod.info.libs[Mod.info.lib_order[i]]
+        path = lib.path .. "/scripts/data/actors/"..self.current_actor_id..".lua"
+        if love.filesystem.getInfo(path) then
+            return path
+        end
+    end
+    return nil, "Couldn't find actor \""..self.current_actor_id.."\"! It could be from the engine, or have an unusual filename."
+end
+
+function OffsetEditorApplet:showSaveOffsetsModal()
+    imgui.SetNextWindowPos(imgui.GetMainViewport():GetCenter(), imgui.ImGuiCond_Appearing, imgui.ImVec2_Float(0.5, 0.5));
+    if imgui.BeginPopupModal("Save offsets?", nil, imgui.ImGuiWindowFlags_AlwaysAutoResize) then
+        imgui.Text([[
+This functionality is experimental!
+Please make sure you have a backup
+and/or git repo set up!
+]])
+        if (imgui.Button("Do it!", imgui.ImVec2_Float(120, 0))) then
+            self:saveOffsets()
+            imgui.CloseCurrentPopup();
+        end
+        imgui.SameLine()
+        if (imgui.Button("Cancel", imgui.ImVec2_Float(120, 0))) then imgui.CloseCurrentPopup(); end
+        imgui.EndPopup()
+    end
+end
+
+---@alias OffsetEditorApplet.OffsetFileEntry {type:"literal",text:string}|{type:"offset",prefix:string,name:string,x:number,y:number}
+
+-- Save offsets in-place of the existing file
+function OffsetEditorApplet:saveOffsets()
+    local filepath = assert(self:getActorPath())
+    ---@return OffsetEditorApplet.OffsetFileEntry[] data
+    ---@return string prefix
+    ---@return string postfix
+    local function parseActorFile()
+        local readfile = love.filesystem.newFile(filepath, "r")
+        local readfileiter = readfile:lines() ---@type fun():string
+        -- TODO: fix this shit
+        local fileprefix = ""
+        local merge = false
+        do
+            for line in readfileiter do
+                fileprefix = fileprefix .. line .. "\n"
+                if Utils.contains(line, "Utils.merge%(self.offsets, *{") then
+                    merge = true
+                    break
+                end
+                if Utils.contains(line, "self.offsets *= *{") then
+                    break
+                end
+            end
+        end
+        if readfile:isEOF() then
+            error("Couldn't find offsets definition (self.offsets = { or Utils.merge(self.offsets, {))")
+        end
+
+        local offset_lines = {} ---@type OffsetEditorApplet.OffsetFileEntry[]
+        ---@param entry OffsetEditorApplet.OffsetFileEntry
+        local function addEntry(entry)
+            table.insert(offset_lines, entry)
+        end
+        local filepostfix = ""
+        local entry_pattern = "(.*)%[\"(.+)\"%] *= *{(.+), *(.+)}"
+        for line in readfileiter do
+            if line:find("^ +}") then
+                filepostfix = line .. "\n"
+                break
+            end
+            if string.find(line, entry_pattern) then
+                
+                local _,_, prefix, name, x, y = string.find(line, entry_pattern)
+                addEntry({ type = "offset", prefix = prefix, name = name, x = tonumber(x), y = tonumber(y) })
+            else
+                addEntry({ type = "literal"; text = line; })
+            end
+        end
+
+        for line in readfileiter do
+            filepostfix = filepostfix .. line .. "\n"
+        end
+        readfile:close()
+        return offset_lines, fileprefix, filepostfix
+    end
+
+    local data, fileprefix, filepostfix = parseActorFile()
+    local lineprefix = "        "
+    local offsets = Utils.copy(self.current_actor.offsets)
+    for offsetid, offset in pairs(self.current_actor.offsets) do
+        for line, entry in ipairs(data) do
+            if entry.type == "offset" and entry.name == offsetid then
+                offsets[offsetid] = nil
+                entry.x, entry.y = offset[1], offset[2]
+                break
+            end
+        end
+    end
+
+    for offsetid, offset in pairs(offsets) do
+        table.insert(data, {type = "offset", x = offset[1], y = offset[2], prefix = lineprefix})
+    end
+
+    local file = love.filesystem.newFile(filepath, "w")
+
+    file:write(fileprefix)
+
+    for index, entry in ipairs(data) do
+        if entry.type == "literal" then
+            file:write(entry.text.."\n")
+        elseif entry.type == "offset" then
+            file:write(entry.prefix.. "[\""..entry.name.."\"] = {"..entry.x..", "..entry.y.."},\n")
+        end
+    end
+
+    file:write(filepostfix)
 end
 
 return OffsetEditorApplet
