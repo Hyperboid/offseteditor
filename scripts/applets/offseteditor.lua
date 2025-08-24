@@ -245,11 +245,12 @@ function OffsetEditorApplet:saveOffsets()
         if entry.type == "literal" then
             file:write(entry.text.."\n")
         elseif entry.type == "offset" then
-            file:write(entry.prefix.. "[\""..entry.name.."\"] = {"..entry.x..", "..entry.y.."},\n")
+            file:write(entry.prefix.. "[\""..entry.name.."\"] = {"..math.floor(entry.x)..", "..math.floor(entry.y).."},\n")
         end
     end
 
     file:write(filepostfix)
+    file:close()
 end
 
 return OffsetEditorApplet
