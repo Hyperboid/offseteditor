@@ -38,9 +38,9 @@ end
 function OffsetEditorApplet:getActorTextures()
     local actor_sprite_path = (self.current_actor):getSpritePath()
     local base_texture_path = actor_sprite_path.."/"..self.default_sprite
-    local base_texture = (Assets.getFramesOrTexture(base_texture_path) or Assets.getFramesOrTexture(base_texture_path.."/down") or Assets.getFramesOrTexture(actor_sprite_path))[1]
+    local base_texture = (Assets.getFramesOrTexture(base_texture_path) or Assets.getFramesOrTexture(base_texture_path.."/down") or Assets.getFramesOrTexture(actor_sprite_path) or Assets.getFramesOrTexture("party/kris/icon/spare"))[1]
     local current_texture_path = actor_sprite_path.."/"..self.current_sprite
-    local current_texture = (Assets.getFramesOrTexture(current_texture_path) or Assets.getFramesOrTexture(current_texture_path.."/down") or {base_texture})[1]
+    local current_texture = (Assets.getFramesOrTexture(current_texture_path) or Assets.getFramesOrTexture(current_texture_path.."/down") or Assets.getFramesOrTexture("party/kris/icon/spare"))[1]
     return base_texture, current_texture
 end
 
