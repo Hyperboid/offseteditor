@@ -34,10 +34,11 @@ function OffsetEditorApplet:setActor(actor)
 end
 
 function OffsetEditorApplet:getActorTextures()
-    local base_texture_path = (self.current_actor):getSpritePath().."/"..self.default_sprite
-    local base_texture = (Assets.getFramesOrTexture(base_texture_path) or Assets.getFramesOrTexture(base_texture_path.."/down"))[1]
-    local current_texture_path = self.current_actor:getSpritePath().."/"..self.current_sprite
-    local current_texture = (Assets.getFramesOrTexture(current_texture_path) or Assets.getFramesOrTexture(current_texture_path.."/down"))[1] or base_texture
+    local actor_sprite_path = (self.current_actor):getSpritePath()
+    local base_texture_path = actor_sprite_path.."/"..self.default_sprite
+    local base_texture = (Assets.getFramesOrTexture(base_texture_path) or Assets.getFramesOrTexture(base_texture_path.."/down") or Assets.getFramesOrTexture(actor_sprite_path))[1]
+    local current_texture_path = actor_sprite_path.."/"..self.current_sprite
+    local current_texture = (Assets.getFramesOrTexture(current_texture_path) or Assets.getFramesOrTexture(current_texture_path.."/down") or {base_texture})[1]
     return base_texture, current_texture
 end
 
