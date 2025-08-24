@@ -86,6 +86,7 @@ function OffsetEditorApplet:show()
         end
         -- self.scale_factor = Utils.wave(Kristal.getTime()*math.pi/32,8,16)
         local offsetx, offsety = self.current_actor:getOffset(self.current_sprite)
+        offsetx, offsety = math.floor(offsetx), math.floor(offsety)
         imgui.Text(string.format("[%q] = {%d, %d}", self.current_sprite, offsetx, offsety))
         local base_texture, current_texture = self:getActorTextures()
         local canvas_p0 = imgui.GetCursorScreenPos()      -- ImDrawList API uses screen coordinates!
@@ -93,7 +94,6 @@ function OffsetEditorApplet:show()
         local draw_list = imgui.GetWindowDrawList();
         local topright = (canvas_p0 + (canvas_sz/2)) - imgui.ImVec2_Float(self.current_actor:getWidth()*self.scale_factor/2, self.current_actor:getHeight()*self.scale_factor/2) ---@type imgui.ImVec2
         imgui.InvisibleButton("canvas", canvas_sz, bit.bor(imgui.ImGuiButtonFlags_MouseButtonLeft, imgui.ImGuiButtonFlags_MouseButtonRight));
-        offsetx, offsety = math.floor(offsetx), math.floor(offsety)
         local dragging = imgui.IsItemHovered() and imgui.IsItemActive()
         if dragging then
             local delta = imgui.C.igGetIO().MouseDelta / self.scale_factor
