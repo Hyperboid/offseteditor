@@ -119,7 +119,7 @@ function OffsetEditorApplet:show()
     if (imgui.Button("Copy code")) then
         local offset_code = "self.offsets = {\n"
         for key, value in Utils.orderedPairs(self.current_actor.offsets) do
-            offset_code = offset_code .. ("[%q] = {%d, %d};\n"):format(key, value[1], value[2])
+            offset_code = offset_code .. ("[%q] = {%d, %d};\n"):format(key, math.floor(value[1]), math.floor(value[2]))
         end
         offset_code = offset_code .. "}"
         love.system.setClipboardText(offset_code)
