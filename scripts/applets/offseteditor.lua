@@ -14,6 +14,14 @@ function OffsetEditorApplet:init()
     self.save_offsets_popop = imgui.bool(false)
 end
 
+function OffsetEditorApplet:getTitle()
+    local name = self.current_actor:getName()
+    if name ~= self.current_actor_id then
+        name = name .. " (" .. self.current_actor_id .. ")"
+    end
+    return super.getTitle(self) .. " - " .. name
+end
+
 function OffsetEditorApplet:setActor(actor)
     if type(actor) == "string" then
         actor = Registry.createActor(actor)
@@ -93,6 +101,7 @@ function OffsetEditorApplet:show()
         local base_texture, current_texture = self:getActorTextures()
         local canvas_p0 = imgui.GetCursorScreenPos()      -- ImDrawList API uses screen coordinates!
         local canvas_sz = imgui.GetContentRegionAvail()   -- Resize canvas to what's available
+        ---@type imgui.ImDrawList
         local draw_list = imgui.GetWindowDrawList();
         local topleft = (canvas_p0 + (canvas_sz/2)) - imgui.ImVec2_Float(self.current_actor:getWidth()*self.scale_factor/2, self.current_actor:getHeight()*self.scale_factor/2) ---@type imgui.ImVec2
         local bottomright = (canvas_p0 + (canvas_sz/2)) + imgui.ImVec2_Float(self.current_actor:getWidth()*self.scale_factor/2, self.current_actor:getHeight()*self.scale_factor/2) ---@type imgui.ImVec2
@@ -112,6 +121,7 @@ function OffsetEditorApplet:show()
         offset = floorvec(imgui.ImVec2_Float(self.current_actor:getOffset(self.current_sprite))) * self.scale_factor
         draw_list:AddImage(imgui.love.TextureRef(current_texture), floorvec(offset + topleft), floorvec(offset + topleft + (imgui.ImVec2_Float(current_texture:getDimensions())*self.scale_factor)), nil, nil, imgui.color(1,1,1,0.8))
         draw_list:AddRect(topleft, bottomright, imgui.GetColorU32_Col(imgui.ImGuiCol_PlotLines, 0.25), nil, nil, 1)
+        -- draw_list:AddCallback
     end
     imgui.EndChild();
     if (imgui.Button("Revert")) then end
