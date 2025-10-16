@@ -77,8 +77,19 @@ function OffsetEditorApplet:show()
             if label == "" then
                 label = "<empty>"
             end
-            if (imgui.Selectable_Bool(label, self.current_sprite == sprite_id)) then
+            local is_selected = self.current_sprite == sprite_id
+            local is_reference = not is_selected and (self.default_sprite == sprite_id)
+            if is_reference then
+                Imgui.lib.PushStyleColor_U32(imgui.ImGuiCol_Header, Imgui.lib.color(0.7, 1, 1, 0.5) )
+            end
+            if (imgui.Selectable_Bool(label, is_selected or is_reference)) then
                 self.current_sprite = sprite_id
+            end
+            if imgui.IsItemClicked(imgui.ImGuiMouseButton_Right) then
+                self.default_sprite = sprite_id
+            end
+            if is_reference then
+                Imgui.lib.PopStyleColor()
             end
         end
         imgui.EndChild();
