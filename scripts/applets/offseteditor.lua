@@ -194,11 +194,11 @@ function OffsetEditorApplet:saveOffsets()
         do
             for line in readfileiter do
                 fileprefix = fileprefix .. line .. "\n"
-                if Utils.contains(line, "Utils.merge%(self.offsets, *{") then
+                if string.find(line, "(Table)?Utils.merge%(self.offsets, *{") then
                     merge = true
                     break
                 end
-                if Utils.contains(line, "self.offsets *= *{") then
+                if string.find(line, "self.offsets *= *{") then
                     break
                 end
             end
