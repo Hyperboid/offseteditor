@@ -263,7 +263,11 @@ function OffsetEditorApplet:saveOffsets()
         table.insert(data, {type = "offset", x = offset[1], y = offset[2], prefix = lineprefix})
     end
 
-    local file = love.filesystem.newFile(filepath, "w")
+    if NativeFS then
+        filepath = love.filesystem.getRealDirectory(filepath) .. "/" .. filepath
+    end
+    local file = (NativeFS or love.filesystem).newFile(filepath)
+    file:open("w")
 
     file:write(fileprefix)
 
