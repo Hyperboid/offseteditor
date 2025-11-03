@@ -57,10 +57,8 @@ function OffsetEditorApplet:show()
         if (imgui.BeginMenu("File")) then
             if imgui.BeginMenu("Open") then
                 for actor_id, actor_class in Utils.orderedPairs(Registry.actors) do
-                    if actor_class.createSprite == Actor.createSprite then
-                        if (imgui.Selectable_Bool(actor_id, self.current_actor_id == actor_id)) then
-                            self:setActor(actor_id)
-                        end
+                    if (imgui.Selectable_Bool(actor_id, self.current_actor_id == actor_id)) then
+                        self:setActor(actor_id)
                     end
                 end
                 imgui.EndMenu()
